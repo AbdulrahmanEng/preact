@@ -23,7 +23,7 @@ import {
 	useDebugValue
 } from 'preact/hooks';
 import { Suspense, lazy } from './suspense';
-import { assign, removeNode } from '../../src/util';
+import { assign } from './util';
 import { createPortal } from './createPortal';
 import { Children } from './Children';
 
@@ -65,7 +65,7 @@ function render(vnode, parent, callback) {
 	// ...but only on the first render, see #1828
 	if (parent._children == null) {
 		while (parent.firstChild) {
-			removeNode(parent.firstChild);
+			parent.removeChild(parent.firstChild);
 		}
 	}
 
