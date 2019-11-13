@@ -3,7 +3,6 @@ import {
 	render as preactRender,
 	cloneElement as preactCloneElement,
 	createRef,
-	h,
 	Component,
 	options,
 	toChildArray,
@@ -23,10 +22,10 @@ import {
 	useDebugValue
 } from 'preact/hooks';
 import { Suspense, lazy } from './suspense';
-import { assign } from './util';
 import { createPortal } from './createPortal';
 import { Children } from './Children';
 import { memo } from './memo';
+import { forwardRef } from './forwardRef';
 import { PureComponent } from './PureComponent';
 
 const version = '16.8.0'; // trick libraries to think we are react
@@ -164,25 +163,6 @@ function findDOMNode(component) {
 // Some libraries like `react-virtualized` explicitly check for this.
 Component.prototype.isReactComponent = {};
 
-/**
- * Pass ref down to a child. This is mainly used in libraries with HOCs that
- * wrap components. Using `forwardRef` there is an easy way to get a reference
- * of the wrapped component instead of one of the wrapper itself.
- * @param {import('./index').ForwardFn} fn
- * @returns {import('./internal').FunctionalComponent}
- */
-function forwardRef(fn) {
-	function Forwarded(props) {
-		let clone = assign({}, props);
-		delete clone.ref;
-		return fn(clone, props.ref);
-	}
-	Forwarded.prototype.isReactComponent = true;
-	Forwarded._forwarded = true;
-	Forwarded.displayName = 'ForwardRef(' + (fn.displayName || fn.name) + ')';
-	return Forwarded;
-}
-
 // Patch in `UNSAFE_*` lifecycle hooks
 function setSafeDescriptor(proto, key) {
 	if (proto['UNSAFE_' + key] && !proto[key]) {
@@ -258,12 +238,6 @@ options.vnode = vnode => {
 
 	// Events
 	applyEventNormalization(vnode);
-
-	// ForwardRef
-	if (type && type._forwarded && vnode.ref) {
-		vnode.props.ref = vnode.ref;
-		vnode.ref = null;
-	}
 
 	// Component base class compat
 	// We can't just patch the base component class, because components that use
